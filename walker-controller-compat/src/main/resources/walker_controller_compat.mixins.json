@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.walkercompat.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "TweakedControllerItemMixin",
+    "PilotControlsBlockEntityMixin",
+    "PilotControlsMenuMixin",
+    "WalkerControlPayloadMixin"
+  ],
+  "client": [
+    "PilotInputMixin",
+    "TweakedControllerClickMixin",
+    "PilotControlsScreenMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
