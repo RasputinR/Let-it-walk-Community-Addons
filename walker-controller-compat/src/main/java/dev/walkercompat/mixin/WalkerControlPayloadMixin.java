@@ -3,8 +3,8 @@ package dev.walkercompat.mixin;
 import dev.letitwalk.content.WalkerCoreBlockEntity;
 import dev.letitwalk.network.WalkerControlPayload;
 import dev.walkercompat.link.ReceiveHolder;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,19 +28,20 @@ public abstract class WalkerControlPayloadMixin {
         cir.setReturnValue(packed);
     }
 
-    @Redirect(method = "lambda$handle$0", at = @At(value = "INVOKE",
+    @Redirect(method = "drive", at = @At(value = "INVOKE",
             target = "Ldev/letitwalk/content/WalkerCoreBlockEntity;receiveLimb(III)V"))
     private static void walkercompat$unpackTenLimbs(WalkerCoreBlockEntity core, int cappedLimb, int up, int fwd,
-                                                    IPayloadContext ctx, WalkerControlPayload msg) {
+                                                    WalkerControlPayload msg, ServerPlayer player, WalkerCoreBlockEntity sameCore) {
         int limb = (msg.limbs() & 7) | ((msg.limbs() >>> 31) << 3);
         core.receiveLimb(Math.min(WALKERCOMPAT_MAX_LIMB, limb), up, fwd);
     }
 
-    @Redirect(method = "lambda$handle$0", at = @At(value = "INVOKE",
+    @Redirect(method = "drive", at = @At(value = "INVOKE",
             target = "Ldev/letitwalk/content/WalkerCoreBlockEntity;receiveInput(IJ)V"))
     private static void walkercompat$mergeFrequencyKeys(WalkerCoreBlockEntity core, int keys, long time,
-                                                        IPayloadContext ctx, WalkerControlPayload msg) {
-        BlockEntity be = ctx.player().level().getBlockEntity(msg.controls());
+                                                        WalkerControlPayload msg, ServerPlayer player, WalkerCoreBlockEntity sameCore) {
+        // only input from a Pilot Controls block (source 0); remotes and dash panels pass straight through
+        BlockEntity be = msg.source() == 0 ? player.level().getBlockEntity(msg.controls()) : null;
         if (be instanceof ReceiveHolder holder) {
             var state = holder.walkercompat$state();
             state.pilotKeys = keys;

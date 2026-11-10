@@ -2,6 +2,7 @@ package dev.walkercompat.mixin;
 
 import com.simibubi.create.foundation.gui.AllIcons;
 import com.simibubi.create.foundation.gui.menu.AbstractSimiContainerScreen;
+import com.simibubi.create.foundation.gui.menu.GhostItemMenu;
 import com.simibubi.create.foundation.gui.widget.IconButton;
 import com.simibubi.create.foundation.utility.CreateLang;
 import dev.letitwalk.client.PilotControlsScreen;
@@ -13,6 +14,8 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import java.util.function.Predicate;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,23 +24,36 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Adds page arrows to the Pilot Controls screen: page 0 = Send keys, pages 1+ = Receive actions. */
+/**
+ * Adds page arrows to the Pilot Controls screen: page 0 = Send keys, pages 1+ = Receive actions.
+ * Since Let it Walk! 0.1.5 this screen is shared with the Remote Controller and Station menus;
+ * those are left exactly as they are.
+ */
 @Mixin(value = PilotControlsScreen.class, remap = false)
-public abstract class PilotControlsScreenMixin extends AbstractSimiContainerScreen<PilotControlsMenu> {
+public abstract class PilotControlsScreenMixin extends AbstractSimiContainerScreen<GhostItemMenu<?>> {
     @Unique
     private static final int WALKERCOMPAT_PAGES = ReceiveAction.PAGES + 1;
 
-    protected PilotControlsScreenMixin(PilotControlsMenu menu, Inventory inv, Component title) {
+    protected PilotControlsScreenMixin(GhostItemMenu<?> menu, Inventory inv, Component title) {
         super(menu, inv, title);
     }
 
+    @Unique
+    private boolean walkercompat$paged() {
+        return this.menu instanceof PilotControlsMenu;
+    }
+
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void walkercompat$startOnSendPage(PilotControlsMenu menu, Inventory inv, Component title, CallbackInfo ci) {
+    private void walkercompat$startOnSendPage(GhostItemMenu<?> menu, Inventory inv, Component title, ItemStack shown,
+                                              Predicate<?> usable, CallbackInfo ci) {
         PagedSlot.shownPage = 0;
     }
 
     @Inject(method = "init", at = @At("TAIL"))
     private void walkercompat$addPageButtons(CallbackInfo ci) {
+        if (!walkercompat$paged()) {
+            return;
+        }
         int x = this.leftPos;
         int y = this.topPos;
         IconButton prev = new IconButton(x + 10, y + 109 - 24, AllIcons.I_MTD_LEFT);
@@ -52,7 +68,7 @@ public abstract class PilotControlsScreenMixin extends AbstractSimiContainerScre
     @Redirect(method = "renderBg", at = @At(value = "INVOKE",
             target = "Ldev/letitwalk/client/PilotControlsScreen;keyName(I)Lnet/minecraft/network/chat/Component;"))
     private Component walkercompat$columnLabel(int column) {
-        if (PagedSlot.shownPage == 0) {
+        if (!walkercompat$paged() || PagedSlot.shownPage == 0) {
             return PilotControlsScreen.keyName(column);
         }
         ReceiveAction action = ReceiveAction.at(PagedSlot.shownPage, column);
@@ -61,6 +77,9 @@ public abstract class PilotControlsScreenMixin extends AbstractSimiContainerScre
 
     @Inject(method = "renderBg", at = @At("TAIL"))
     private void walkercompat$drawPageInfo(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY, CallbackInfo ci) {
+        if (!walkercompat$paged()) {
+            return;
+        }
         int x = this.leftPos;
         int y = this.topPos;
         int page = PagedSlot.shownPage;
@@ -82,7 +101,7 @@ public abstract class PilotControlsScreenMixin extends AbstractSimiContainerScre
     @Inject(method = "addToTooltip", at = @At("HEAD"), cancellable = true)
     private void walkercompat$receiveTooltip(List<Component> list, int slot, CallbackInfoReturnable<List<Component>> cir) {
         int r = slot - ReceiveAction.SEND_SLOTS;
-        if (r >= 0 && r < ReceiveAction.RECEIVE_SLOTS) {
+        if (walkercompat$paged() && r >= 0 && r < ReceiveAction.RECEIVE_SLOTS) {
             ReceiveAction action = ReceiveAction.ALL[r / 2];
             String name = Component.translatable(action.nameKey()).getString();
             list.add(CreateLang.translateDirect("linked_controller.frequency_slot_" + (r % 2 + 1), name).withStyle(ChatFormatting.GOLD));

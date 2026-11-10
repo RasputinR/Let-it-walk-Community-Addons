@@ -4,9 +4,11 @@ Add-ons for the **Let it Walk!** Create addon (Minecraft 1.21.1, NeoForge).
 
 ## Walker Controller Compat
 
-**Download:** [`releases/walker_controller_compat-1.1.0.jar`](releases/walker_controller_compat-1.1.0.jar). Open it, then click the download button (↓) at the top right.
+**Download** (open the file, then click the download button (↓) at the top right):
+- **Let it Walk! 0.1.5 and newer:** [`releases/walker_controller_compat-1.2.0.jar`](releases/walker_controller_compat-1.2.0.jar)
+- **Let it Walk! 0.1.1 (older versions):** [`releases/walker_controller_compat-1.1.0.jar`](releases/walker_controller_compat-1.1.0.jar)
 
-Requires Let it Walk! 0.1.1+, Create Tweaked Controllers 1.2.7+, Create 6.0.10+ and Sable 2.0.x.
+Also requires Create Tweaked Controllers 1.2.7+, Create 6.0.10+ and Sable 2.0.x.
 Put it in your `mods` folder. On a multiplayer server, install it on the server too.
 
 What it does:
@@ -17,7 +19,7 @@ What it does:
 ## Building from source
 
 The build compiles against the mods' own jars, which are not included here. Copy these into `walker-controller-compat/libs/`:
-`let_it_walk-0.1.1.jar`, `create_tweaked_controllers-1.21.1-1.2.7.jar`, `create-1.21.1-6.0.10.jar`, `sable-neoforge-1.21.1-2.0.6.jar`.
+`let_it_walk-0.1.5.jar`, `create_tweaked_controllers-1.21.1-1.2.7.jar`, `create-1.21.1-6.0.10.jar`, `sable-neoforge-1.21.1-2.0.6.jar`.
 Then copy these into `libs/bundled/`; they're the jars bundled inside the Create and Sable jars, under `META-INF/jarjar`:
 `sable-companion-common-*.jar`, `ponder-neoforge-*.jar`, `Registrate-*.jar`.
 Run `./gradlew build`.
